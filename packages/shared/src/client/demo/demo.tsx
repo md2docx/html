@@ -14,14 +14,8 @@ import demoCode from "./demo.tsx?raw";
 import { useState } from "react";
 // import { remarkDocx } from "@m2d/remark-docx";
 import { toDocx } from "mdast2docx";
-import { emojiPlugin } from "@m2d/emoji";
-import {
-  tablePlugin,
-  listPlugin,
-  mathPlugin,
-  imagePlugin,
-  htmlPlugin,
-} from "mdast2docx/dist/plugins";
+import { htmlPlugin } from "@m2d/html";
+import { tablePlugin, listPlugin, mathPlugin, imagePlugin } from "mdast2docx/dist/plugins";
 
 /** React live demo */
 export function Demo() {
@@ -50,14 +44,7 @@ export function Demo() {
       mdast,
       {},
       {
-        plugins: [
-          htmlPlugin(),
-          tablePlugin(),
-          listPlugin(),
-          mathPlugin(),
-          emojiPlugin(),
-          imagePlugin(),
-        ],
+        plugins: [htmlPlugin(), tablePlugin(), listPlugin(), mathPlugin(), imagePlugin()],
       },
     ).then(blob => {
       const url = URL.createObjectURL(blob as Blob);

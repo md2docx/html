@@ -1,71 +1,119 @@
-# @m2d/html
+# `@m2d/html` <img src="https://raw.githubusercontent.com/mayank1513/mayank1513/main/popper.png" height="40"/>
 
-[![test](https://github.com/md2docx/html/actions/workflows/test.yml/badge.svg)](https://github.com/md2docx/html/actions/workflows/test.yml) [![Maintainability](https://api.codeclimate.com/v1/badges/aa896ec14c570f3bb274/maintainability)](https://codeclimate.com/github/md2docx/html/maintainability) [![codecov](https://codecov.io/gh/md2docx/html/graph/badge.svg)](https://codecov.io/gh/md2docx/html) [![Version](https://img.shields.io/npm/v/@m2d/html.svg?colorB=green)](https://www.npmjs.com/package/@m2d/html) [![Downloads](https://img.jsdelivr.com/img.shields.io/npm/d18m/@m2d/html.svg)](https://www.npmjs.com/package/@m2d/html) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/@m2d/html)
+[![Version](https://img.shields.io/npm/v/@m2d/html?color=green)](https://www.npmjs.com/package/@m2d/html) ![Downloads](https://img.shields.io/npm/d18m/@m2d/html) ![Bundle Size](https://img.shields.io/bundlephobia/minzip/@m2d/html)
 
-> Emoji shortcode support for `mdast2docx`
-
-This plugin adds support for emoji shortcodes (e.g., `:smile:`, `:rocket:`) in your Markdown-to-DOCX conversion pipeline. It replaces recognized emoji shortcodes with their corresponding Unicode characters during the MDAST transformation.
-
----
-
-## ✨ Features
-
-- Converts emoji shortcodes to Unicode emojis (e.g., `:tada:` → 🎉)
-- Compatible with [`@m2d/core`](https://www.npmjs.com/package/@m2d/core)
-- Works seamlessly within the `mdast2docx` plugin ecosystem
-- Easy to integrate and lightweight
+> Parses embedded **HTML** into extended **MDAST nodes** to unlock full HTML-to-DOCX conversion support.
 
 ---
 
 ## 📦 Installation
 
 ```bash
-pnpm install @m2d/html
+npm install @m2d/html
 ```
 
-**_or_**
+```bash
+pnpm add @m2d/html
+```
 
 ```bash
 yarn add @m2d/html
 ```
 
-**_or_**
+---
 
-```bash
-npm add @m2d/html
+## 🚀 Overview
+
+The `@m2d/html` plugin for [`mdast2docx`](https://github.com/mayankchaudhari/mdast2docx) enables the parsing and transformation of **embedded raw HTML** inside Markdown into **extended MDAST**. This unlocks the ability to support features like images, tables, checkboxes, styles, and more — using HTML tags directly inside your Markdown documents.
+
+---
+
+## ⚠️ Important
+
+> **This plugin must be registered early in the plugin pipeline.**  
+> It transforms raw HTML into extended MDAST nodes, which are then handled by other `@m2d/*` plugins (such as `@m2d/image`, `@m2d/table`, etc).  
+> If used after other plugins, the HTML content, e.g, images, tables, or lists may be ignored or lost in the DOCX output.
+
+---
+
+## 🛠️ Usage
+
+```ts
+import { htmlPlugin } from "@m2d/html";
+
+const plugins = [
+  htmlPlugin(), // ✅ Must come first
+  imagePlugin(),
+  tablePlugin(),
+];
 ```
 
 ---
 
-## 🧠 How It Works
+## 🧩 How It Works
 
-This plugin scans all text nodes for emoji shortcodes (e.g., `:fire:`, `:sparkles:`) and replaces them with matching Unicode emojis using a predefined emoji JSON mapping.
+1. Parses raw embedded HTML using the DOM.
+2. Converts DOM nodes to extended MDAST nodes.
+3. Other `@m2d/*` plugins or the `@m2d/core` package consume these extended nodes to generate DOCX output.
 
----
-
-## 🔍 Emoji Support
-
-It uses the [GitHub-style emoji shortcodes](https://github.com/ikatyang/emoji-cheat-sheet) and more — if a shortcode is not recognized, it will remain unchanged.
+> This plugin enriches the AST to enable other plugins and core engine to convert it to docx.
 
 ---
 
-## 🛠️ Development
+## ✅ Supported Elements
 
-```bash
-# Clone and install dependencies
-git clone https://github.com/md2docx/emoji-plugin
-cd emoji-plugin
-npm install
-
-# Build / Test / Dev
-npm run build
-```
+| HTML Element              | MDAST Node        | Notes                                |
+| ------------------------- | ----------------- | ------------------------------------ |
+| `<img>`                   | `image`           | Supports styles and attributes       |
+| `<br>`                    | `break`           | Line breaks                          |
+| `<strong>`, `<b>`         | `strong`          | Bold text                            |
+| `<em>`, `<i>`             | `emphasis`        | Italics                              |
+| `<del>`, `<s>`            | `delete`          | Strike-through                       |
+| `<a>`                     | `link`            | Hyperlinks                           |
+| `<table>`                 | `table`, `row`    | Basic tables supported               |
+| `<input type="checkbox">` | `checkbox`        | Readonly checkboxes                  |
+| `<hr>`                    | `thematicBreak`   | Horizontal line                      |
+| `<blockquote>`            | `blockquote`      | Blockquotes                          |
+| Others                    | `paragraph`, etc. | Styled or inline nodes with rich AST |
 
 ---
 
-## 📄 License
+## 🎨 Style Support
 
-Licensed under the **MPL-2.0** License.
+- `text-align`, `color`, `background-color`
+- `font-weight`, `font-style`, `text-decoration`
+- `text-transform`
+- `border`, `border-left`, etc.
+- `display: inline-block` and similar behaviors
+
+---
+
+## ⚠️ Limitations
+
+- External `<style>` tags or CSS files are not supported.
+- Complex or deeply nested HTML may be simplified.
+- Table `rowSpan` and `colSpan` are not yet supported.
+- Script tags and non-visual elements are ignored.
+
+---
+
+## 🧪 Production Ready
+
+While this plugin was originally experimental, it is now **stable and production-ready**.  
+It powers the rich HTML support in `mdast2docx`, including checkboxes, tables, and styled images.
+
+> 🧵 **Contributions, ideas, and feedback are welcome!** Open an issue or PR anytime.
+
+---
+
+## 🔌 Related Plugins/Packages
+
+| Plugin                                               | Purpose                                |
+| ---------------------------------------------------- | -------------------------------------- |
+| [`@m2d/core`](https://npmjs.com/package/@m2d/core)   | Converts extended MDAST to DOCX        |
+| [`@m2d/image`](https://npmjs.com/package/@m2d/image) | Renders image nodes to DOCX            |
+| [`@m2d/table`](https://npmjs.com/package/@m2d/table) | Renders table nodes to DOCX            |
+| [`@m2d/list`](https://npmjs.com/package/@m2d/list)   | Enhanced list support (tasks, bullets) |
 
 ---
 
@@ -73,9 +121,13 @@ Licensed under the **MPL-2.0** License.
 
 If you find this useful:
 
-- ⭐ Star [mdast2docx](https://github.com/md2docx/mdast2docx) on GitHub
+- ⭐ Star [mdast2docx](https://github.com/tiny-md/mdast2docx) on GitHub
 - ❤️ Consider [sponsoring](https://github.com/sponsors/mayank1513)
 
 ---
+
+## 🧾 License
+
+MIT © [Mayank Chaudhari](https://github.com/mayankchaudhari)
 
 <p align="center">Made with 💖 by <a href="https://mayank-chaudhari.vercel.app" target="_blank">Mayank Kumar Chaudhari</a></p>
