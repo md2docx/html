@@ -35,7 +35,7 @@ const INLINE_TAGS = [
   "A",
   "SUP",
   "SUB",
-  "IMG",
+  "svg",
 ] as const;
 
 /**
@@ -247,10 +247,10 @@ const processInlineDOMNode = (el: Node): PhrasingContent => {
         alt: attributes.alt ?? "",
         data: { ...data, ...attributes },
       } as Image;
-    case "SVG":
+    case "svg":
       return {
         type: "image",
-        url: `data:image/svg+xml;base64,${el.outerHTML}`,
+        url: `data:image/svg+xml;base64,${btoa(el.outerHTML)}`,
         data,
       } as Image;
     case "EM":
@@ -340,7 +340,7 @@ const defaultBorder = { left: border, right: border, top: border, bottom: border
 /**
  * Converts block-level HTML elements into MDAST `BlockContent` nodes.
  *
- * @param el - HTML or SVG element to process.
+ * @param el - HTML or svg element to process.
  * @returns Converted block content node.
  */
 const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
@@ -470,6 +470,7 @@ export const htmlPlugin: () => IPlugin = () => {
         el.innerHTML = node.value;
 
         Object.assign(node, createFragmentWithParentNodes(el));
+        console.log("el 0 ----", node, el);
       }
       return [];
     },
