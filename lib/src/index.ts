@@ -470,7 +470,6 @@ export const htmlPlugin: () => IPlugin = () => {
         el.innerHTML = node.value;
 
         Object.assign(node, createFragmentWithParentNodes(el));
-        console.log("el 0 ----", node, el);
       }
       return [];
     },
