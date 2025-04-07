@@ -249,10 +249,11 @@ const processInlineDOMNode = (el: Node): PhrasingContent => {
       } as Image;
     case "svg":
       return {
-        type: "image",
-        url: `data:image/svg+xml;base64,${btoa(el.outerHTML)}`,
+        type: "svg",
+        id: `s${crypto.randomUUID()}`,
+        value: el.outerHTML,
         data,
-      } as Image;
+      };
     case "EM":
     case "I":
     case "STRONG":
