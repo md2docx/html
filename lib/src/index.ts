@@ -430,17 +430,18 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
  *
  * @param pNode - MDAST parent node.
  */
-const consolidateInlineHTML = (pNode: Parent) => {
+const preprocess = (pNode: Parent) => {
   const children: RootContent[] = [];
   const htmlNodeStack: (Parent & { tag: string })[] = [];
+
   for (const node of pNode.children) {
-    if ((node as Parent).children?.length) consolidateInlineHTML(node as Parent);
+    if ((node as Parent).children?.length) preprocess(node as Parent);
     // match only inline non-self-closing html nodes.
     if (node.type === "html" && /^<[^>]*[^/]>$/.test(node.value)) {
-      const tag = node.value.split(" ")[0].slice(1);
+      const tag = node.value.split(" ")[0].replace(/^<|>$/g, "");
       // ending tag
       if (tag[0] === "/") {
-        if (htmlNodeStack[0]?.tag === tag.slice(1, -1))
+        if (htmlNodeStack[0]?.tag === tag.slice(1))
           children.push(htmlNodeStack.shift() as RootContent);
       } else {
         htmlNodeStack.unshift({ ...node, children: [], tag });
@@ -485,6 +486,6 @@ export const htmlPlugin: () => IPlugin = () => {
       }
       return [];
     },
-    preprocess: consolidateInlineHTML,
+    preprocess,
   };
 };
