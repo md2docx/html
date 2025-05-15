@@ -448,6 +448,11 @@ const preprocess = (pNode: Parent) => {
       }
     } else if (htmlNodeStack.length) {
       htmlNodeStack[0].children.push(node);
+    } else if (node.type === "html") {
+      // block html
+      const el = document.createElement("div");
+      el.innerHTML = node.value;
+      Object.assign(node, createFragmentWithParentNodes(el));
     } else {
       children.push(node);
     }
@@ -466,15 +471,6 @@ const preprocess = (pNode: Parent) => {
  */
 export const htmlPlugin: () => IPlugin = () => {
   return {
-    block: async (_docx, node) => {
-      if (node.type === "html") {
-        const el = document.createElement("div");
-        el.innerHTML = node.value;
-
-        Object.assign(node, createFragmentWithParentNodes(el));
-      }
-      return [];
-    },
     inline: async (_docx, node) => {
       if (node.type === "html") {
         const value = node.value?.trim() ?? "";
