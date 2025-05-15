@@ -11,7 +11,7 @@ This is a checkbox - <input type="checkbox" />
 
 ### 13.1. Inline HTML
 
-This is an example of <em>inline HTML</em> inside a paragraph:
+This is an example of <em>inline <strong>HTML</strong> </em> inside a paragraph:
 
 This is a <span style="color: red; font-weight: bold;">red bold text</span> inside a Markdown paragraph.
 

@@ -441,8 +441,7 @@ const preprocess = (pNode: Parent) => {
       const tag = node.value.split(" ")[0].replace(/^<|>$/g, "");
       // ending tag
       if (tag[0] === "/") {
-        if (htmlNodeStack[0]?.tag === tag.slice(1))
-          children.push(htmlNodeStack.shift() as RootContent);
+        (htmlNodeStack[1]?.children ?? children).push(htmlNodeStack.shift() as RootContent);
       } else {
         htmlNodeStack.unshift({ ...node, children: [], tag });
       }
