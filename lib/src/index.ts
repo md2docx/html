@@ -25,33 +25,70 @@ import {
  * HTML inline tags supported by the plugin for conversion.
  */
 const INLINE_TAGS = [
+  "A",
+  "ABBR",
+  "ACRONYM", // Deprecated but still inline
+  "B",
+  "BDI",
+  "BDO",
+  "BIG", // Deprecated but still inline
   "BR",
-  "IMG",
+  "BUTTON", // Technically inline-block, but often treated inline
+  "CITE",
+  "CODE",
+  "DATA",
+  "DATALIST",
+  "DEL",
+  "DFN",
   "EM",
   "I",
-  "STRONG",
-  "B",
-  "DEL",
+  "IMG",
+  "INPUT",
+  "INS",
+  "KBD",
+  "LABEL",
+  "MARK",
+  "METER",
+  "NOSCRIPT",
+  "OBJECT",
+  "OUTPUT",
+  "Q",
+  "RUBY",
+  "RP",
+  "RT",
   "S",
-  "A",
-  "SUP",
+  "SAMP",
+  "SCRIPT",
+  "SELECT",
+  "SLOT",
+  "SMALL",
+  "SPAN",
+  "STRONG",
   "SUB",
+  "SUP",
   "svg",
+  "TEMPLATE",
+  "TEXTAREA",
+  "TIME",
+  "U",
+  "TT", // Deprecated
+  "VAR",
+  "WBR",
 ] as const;
 
 /**
  * Mapping of DOM tag names to MDAST node types.
  */
 const DOM_TO_MDAST_MAP = {
-  BR: "break",
-  IMG: "image",
-  EM: "emphasis",
-  I: "emphasis",
-  STRONG: "strong",
+  A: "link",
   B: "strong",
+  BR: "break",
+  EM: "emphasis",
+  STRONG: "strong",
+  I: "emphasis",
+  IMG: "image",
   DEL: "delete",
   S: "delete",
-  A: "link",
 } as const;
 
 /**
@@ -233,11 +270,14 @@ const parseStyles = (el: Node, inline = true): Data => {
  * @param el - DOM node to process.
  * @returns PhrasingContent-compatible node.
  */
-const processInlineDOMNode = (el: Node): PhrasingContent => {
+const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
   if (!(el instanceof HTMLElement || el instanceof SVGElement))
-    return { type: "text", value: el.textContent ?? "" };
+    return {
+      type: "text",
+      value: (isPre ? el.textContent : el.textContent?.replace(/^\s+|\s+$/g, " ")) ?? "",
+    };
 
-  const children = Array.from(el.childNodes).map(processInlineDOMNode);
+  const children = Array.from(el.childNodes).map(cNode => processInlineDOMNode(cNode, isPre));
   const data = parseStyles(el);
   const attributes: Record<string, string> = el
     .getAttributeNames()
@@ -297,14 +337,21 @@ const createFragmentWithParentNodes = (el: Node, data?: Data): BlockContent => {
       !INLINE_TAGS.includes(node.tagName as (typeof INLINE_TAGS)[number])
     ) {
       if (tmp.length) {
-        children.push({ type: "paragraph", children: tmp.map(processInlineDOMNode) });
+        children.push({
+          type: "paragraph",
+          children: tmp.map(tNode => processInlineDOMNode(tNode, data?.pre)),
+        });
         tmp.length = 0;
       }
       // skipcq: JS-0357
       children.push(processDOMNode(node));
     } else tmp.push(node);
   }
-  if (tmp.length) children.push({ type: "paragraph", children: tmp.map(processInlineDOMNode) });
+  if (tmp.length)
+    children.push({
+      type: "paragraph",
+      children: tmp.map(tNode => processInlineDOMNode(tNode, data?.pre)),
+    });
   return children.length === 1
     ? { ...children[0], data: { ...data, ...children[0].data } }
     : {
@@ -362,7 +409,7 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
       return {
         type: "heading",
         depth: parseInt(el.tagName[1]),
-        children: Array.from(el.childNodes).map(processInlineDOMNode),
+        children: Array.from(el.childNodes).map(cNode => processInlineDOMNode(cNode)),
         data,
       } as Heading;
     case "PRE":
@@ -436,7 +483,10 @@ const processInlineNode = (node: HtmlNode) => {
   const tag = value.split(" ")[0].slice(1);
   const el = document.createElement("div");
   el.innerHTML = value.endsWith("/>") ? value : `${value}</${tag}>`;
-  Object.assign(node, { ...processInlineDOMNode(el.children[0]), children: node.children ?? [] });
+  Object.assign(node, {
+    ...processInlineDOMNode(el.children[0]),
+    children: node.children ?? [],
+  });
 };
 
 /**
