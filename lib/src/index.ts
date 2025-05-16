@@ -512,7 +512,6 @@ const preprocess = (pNode: Parent, isRoot = true) => {
     }
   }
   pNode.children = children;
-  console.log("hk---------", pNode);
 };
 
 /**

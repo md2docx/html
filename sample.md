@@ -82,6 +82,7 @@ Here is an SVG image.
     <label for="email">Email:</label>
     <input type="email" id="email" name="email" />   
   </p>
+  <br />
     <input type="submit" value="Submit" />
 </form>
 
