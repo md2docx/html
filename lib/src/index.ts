@@ -9,6 +9,7 @@ import {
   RootContent,
   BlockContent,
   TableRow,
+  Html,
 } from "@m2d/core";
 import { standardizeColor } from "./utils";
 import {
@@ -67,6 +68,11 @@ const CSS_BORDER_STYLES = [
   "inset",
   "outset",
 ];
+
+interface HtmlNode extends Html {
+  tag: string;
+  children: (RootContent | PhrasingContent)[];
+}
 
 /**
  * Parsed CSS border representation.
@@ -425,38 +431,60 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
   return { type: "paragraph", children: [processInlineDOMNode(el)], data };
 };
 
+const processInlineNode = (node: HtmlNode) => {
+  const value = node.value?.trim() ?? "";
+  const tag = value.split(" ")[0].slice(1);
+  const el = document.createElement("div");
+  el.innerHTML = value.endsWith("/>") ? value : `${value}</${tag}>`;
+  Object.assign(node, { ...processInlineDOMNode(el.children[0]), children: node.children ?? [] });
+};
+
 /**
  * Consolidates inline HTML tag children inside valid tag-matching groups.
  *
  * @param pNode - MDAST parent node.
  */
-const preprocess = (pNode: Parent) => {
+const preprocess = (pNode: Parent, isRoot = true) => {
   const children: RootContent[] = [];
-  const htmlNodeStack: (Parent & { tag: string })[] = [];
+  const htmlNodeStack: HtmlNode[] = [];
 
   for (const node of pNode.children) {
-    if ((node as Parent).children?.length) preprocess(node as Parent);
+    if ((node as Parent).children?.length) preprocess(node as Parent, false);
     // match only inline non-self-closing html nodes.
     if (node.type === "html" && /^<[^>]*[^/]>$/.test(node.value)) {
       const tag = node.value.split(" ")[0].replace(/^<|>$/g, "");
       // ending tag
       if (tag[0] === "/") {
-        (htmlNodeStack[1]?.children ?? children).push(htmlNodeStack.shift() as RootContent);
+        const hNode = htmlNodeStack.shift();
+        if (!hNode) throw new Error(`Invalid HTML: ${node.value}`);
+        processInlineNode(hNode);
+        (htmlNodeStack[0]?.children ?? children).push(hNode);
       } else {
         htmlNodeStack.unshift({ ...node, children: [], tag });
       }
     } else if (htmlNodeStack.length) {
       htmlNodeStack[0].children.push(node);
-    } else if (node.type === "html") {
+    } else {
+      children.push(node);
+    }
+
+    const isSelfClosingTag = node.type === "html" && /^<[^>]*\/>$/.test(node.value);
+    // self closing tags
+    if (isSelfClosingTag && !isRoot) {
+      // @ts-expect-error -- ok
+      processInlineNode(node);
+    } else if (
+      (isSelfClosingTag && isRoot) ||
+      (node.type === "html" && !/^<[^>]*>$/.test(node.value))
+    ) {
       // block html
       const el = document.createElement("div");
       el.innerHTML = node.value;
       Object.assign(node, createFragmentWithParentNodes(el));
-    } else {
-      children.push(node);
     }
   }
   pNode.children = children;
+  console.log("hk---------", pNode);
 };
 
 /**
@@ -470,17 +498,6 @@ const preprocess = (pNode: Parent) => {
  */
 export const htmlPlugin: () => IPlugin = () => {
   return {
-    inline: async (_docx, node) => {
-      if (node.type === "html") {
-        const value = node.value?.trim() ?? "";
-        const tag = value.split(" ")[0].slice(1);
-        const el = document.createElement("div");
-        el.innerHTML = value.endsWith("/>") ? value : `${value}</${tag}>`;
-        // @ts-expect-error - changing node type here.
-        Object.assign(node, { ...processInlineDOMNode(el.children[0]), children: node.children });
-      }
-      return [];
-    },
     preprocess,
   };
 };
