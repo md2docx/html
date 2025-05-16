@@ -4,8 +4,6 @@ import { unified } from "unified";
 import md from "../../../../../sample.md?raw";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
-import remarkFrontmatter from "remark-frontmatter";
-import remarkMath from "remark-math";
 import styles from "./demo.module.scss";
 import { CodeDisplay } from "./code-display";
 import { removePosition } from "unist-util-remove-position";
@@ -15,27 +13,16 @@ import { useState } from "react";
 // import { remarkDocx } from "@m2d/remark-docx";
 import { toDocx } from "mdast2docx";
 import { htmlPlugin } from "@m2d/html";
-import { tablePlugin, listPlugin, mathPlugin, imagePlugin } from "mdast2docx/dist/plugins";
+import { tablePlugin, imagePlugin } from "mdast2docx/dist/plugins";
 
 /** React live demo */
 export function Demo() {
   const [loading, setLoading] = useState(false);
-  const mdastProcessor = unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkFrontmatter)
-    .use(remarkMath);
+  const mdastProcessor = unified().use(remarkParse).use(remarkGfm);
 
   const mdast = mdastProcessor.parse(md);
 
   removePosition(mdast);
-
-  // const docxProcessor = unified()
-  //   .use(remarkParse)
-  //   .use(remarkGfm)
-  //   .use(remarkFrontmatter)
-  //   .use(remarkMath)
-  //   .use(remarkDocx);
 
   const downloadDocx = () => {
     setLoading(true);
@@ -44,7 +31,7 @@ export function Demo() {
       mdast,
       {},
       {
-        plugins: [htmlPlugin(), tablePlugin(), listPlugin(), mathPlugin(), imagePlugin()],
+        plugins: [htmlPlugin(), tablePlugin(), imagePlugin()],
       },
     ).then(blob => {
       const url = URL.createObjectURL(blob as Blob);

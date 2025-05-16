@@ -1,5 +1,15 @@
 # @m2d/html
 
+## 1.0.1
+
+### Patch Changes
+
+- 114454a: fix: Fix inline tag extraction logic
+- 2cc7d49: fix: Improve inline tag list. 2. Remove extra spacings.
+- 5964742: Fix: fix form styles
+- 0d71109: fix: Fix nested inline html tags
+- 06a4f14: Fix: handle block and inline nodes in preprocess.
+
 ## 1.0.0
 
 ### Major Changes

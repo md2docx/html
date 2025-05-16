@@ -9,48 +9,79 @@ import {
   RootContent,
   BlockContent,
   TableRow,
+  Html,
 } from "@m2d/core";
 import { standardizeColor } from "./utils";
-import {
-  AlignmentType,
-  BorderStyle,
-  FrameAnchorType,
-  HorizontalPositionAlign,
-  IBorderOptions,
-  VerticalPositionAlign,
-} from "docx";
+import { AlignmentType, BorderStyle, IBorderOptions } from "docx";
 
 /**
  * HTML inline tags supported by the plugin for conversion.
  */
 const INLINE_TAGS = [
+  "A",
+  "ABBR",
+  "ACRONYM", // Deprecated but still inline
+  "B",
+  "BDI",
+  "BDO",
+  "BIG", // Deprecated but still inline
   "BR",
-  "IMG",
+  "BUTTON", // Technically inline-block, but often treated inline
+  "CITE",
+  "CODE",
+  "DATA",
+  "DATALIST",
+  "DEL",
+  "DFN",
   "EM",
   "I",
-  "STRONG",
-  "B",
-  "DEL",
+  "IMG",
+  "INPUT",
+  "INS",
+  "KBD",
+  "LABEL",
+  "MARK",
+  "METER",
+  "NOSCRIPT",
+  "OBJECT",
+  "OUTPUT",
+  "Q",
+  "RUBY",
+  "RP",
+  "RT",
   "S",
-  "A",
-  "SUP",
+  "SAMP",
+  "SCRIPT",
+  "SELECT",
+  "SLOT",
+  "SMALL",
+  "SPAN",
+  "STRONG",
   "SUB",
+  "SUP",
   "svg",
+  "TEMPLATE",
+  "TEXTAREA",
+  "TIME",
+  "U",
+  "TT", // Deprecated
+  "VAR",
+  "WBR",
 ] as const;
 
 /**
  * Mapping of DOM tag names to MDAST node types.
  */
 const DOM_TO_MDAST_MAP = {
-  BR: "break",
-  IMG: "image",
-  EM: "emphasis",
-  I: "emphasis",
-  STRONG: "strong",
+  A: "link",
   B: "strong",
+  BR: "break",
+  EM: "emphasis",
+  STRONG: "strong",
+  I: "emphasis",
+  IMG: "image",
   DEL: "delete",
   S: "delete",
-  A: "link",
 } as const;
 
 /**
@@ -67,6 +98,11 @@ const CSS_BORDER_STYLES = [
   "inset",
   "outset",
 ];
+
+interface HtmlNode extends Html {
+  tag: string;
+  children: (RootContent | PhrasingContent)[];
+}
 
 /**
  * Parsed CSS border representation.
@@ -227,11 +263,14 @@ const parseStyles = (el: Node, inline = true): Data => {
  * @param el - DOM node to process.
  * @returns PhrasingContent-compatible node.
  */
-const processInlineDOMNode = (el: Node): PhrasingContent => {
+const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
   if (!(el instanceof HTMLElement || el instanceof SVGElement))
-    return { type: "text", value: el.textContent ?? "" };
+    return {
+      type: "text",
+      value: (isPre ? el.textContent : el.textContent?.replace(/^\s+|\s+$/g, " ")) ?? "",
+    };
 
-  const children = Array.from(el.childNodes).map(processInlineDOMNode);
+  const children = Array.from(el.childNodes).map(cNode => processInlineDOMNode(cNode, isPre));
   const data = parseStyles(el);
   const attributes: Record<string, string> = el
     .getAttributeNames()
@@ -269,7 +308,13 @@ const processInlineDOMNode = (el: Node): PhrasingContent => {
         data,
       };
     case "INPUT":
-      if (/(radio|checkbox)/.test((el as HTMLInputElement).type)) return { type: "checkbox" };
+      return /(radio|checkbox)/.test((el as HTMLInputElement).type)
+        ? { type: "checkbox" }
+        : {
+            type: "text",
+            value: `_${(el as HTMLInputElement).value || "_".repeat(20)}_`,
+            data: { ...data, border: { style: BorderStyle.OUTSET } },
+          };
   }
   return { type: "fragment", children, data };
 };
@@ -291,14 +336,21 @@ const createFragmentWithParentNodes = (el: Node, data?: Data): BlockContent => {
       !INLINE_TAGS.includes(node.tagName as (typeof INLINE_TAGS)[number])
     ) {
       if (tmp.length) {
-        children.push({ type: "paragraph", children: tmp.map(processInlineDOMNode) });
+        children.push({
+          type: "paragraph",
+          children: tmp.map(tNode => processInlineDOMNode(tNode, data?.pre)),
+        });
         tmp.length = 0;
       }
       // skipcq: JS-0357
       children.push(processDOMNode(node));
     } else tmp.push(node);
   }
-  if (tmp.length) children.push({ type: "paragraph", children: tmp.map(processInlineDOMNode) });
+  if (tmp.length)
+    children.push({
+      type: "paragraph",
+      children: tmp.map(tNode => processInlineDOMNode(tNode, data?.pre)),
+    });
   return children.length === 1
     ? { ...children[0], data: { ...data, ...children[0].data } }
     : {
@@ -356,7 +408,7 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
       return {
         type: "heading",
         depth: parseInt(el.tagName[1]),
-        children: Array.from(el.childNodes).map(processInlineDOMNode),
+        children: Array.from(el.childNodes).map(cNode => processInlineDOMNode(cNode)),
         data,
       } as Heading;
     case "PRE":
@@ -400,29 +452,19 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
         children: [{ type: "text", value: `Not supported yet!\n\n${el.textContent}` }],
         data: { ...data, pre: true, border: defaultBorder },
       };
-    case "INPUT":
-      if (!/(radio|checkbox)/.test((el as HTMLInputElement).type)) {
-        return {
-          type: "paragraph",
-          children: [],
-          data: {
-            ...data,
-            frame: {
-              width: 5000,
-              height: 90,
-              alignment: { x: HorizontalPositionAlign.LEFT, y: VerticalPositionAlign.CENTER },
-              anchor: {
-                horizontal: FrameAnchorType.TEXT,
-                vertical: FrameAnchorType.TEXT,
-              },
-              type: "alignment",
-            },
-            border: defaultBorder,
-          },
-        };
-      }
   }
   return { type: "paragraph", children: [processInlineDOMNode(el)], data };
+};
+
+const processInlineNode = (node: HtmlNode) => {
+  const value = node.value?.trim() ?? "";
+  const tag = value.split(" ")[0].slice(1);
+  const el = document.createElement("div");
+  el.innerHTML = value.endsWith("/>") ? value : `${value}</${tag}>`;
+  Object.assign(node, {
+    ...processInlineDOMNode(el.children[0]),
+    children: node.children ?? [],
+  });
 };
 
 /**
@@ -430,18 +472,21 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
  *
  * @param pNode - MDAST parent node.
  */
-const consolidateInlineHTML = (pNode: Parent) => {
+const preprocess = (pNode: Parent, isRoot = true) => {
   const children: RootContent[] = [];
-  const htmlNodeStack: (Parent & { tag: string })[] = [];
+  const htmlNodeStack: HtmlNode[] = [];
+
   for (const node of pNode.children) {
-    if ((node as Parent).children?.length) consolidateInlineHTML(node as Parent);
+    if ((node as Parent).children?.length) preprocess(node as Parent, false);
     // match only inline non-self-closing html nodes.
     if (node.type === "html" && /^<[^>]*[^/]>$/.test(node.value)) {
-      const tag = node.value.split(" ")[0].slice(1);
+      const tag = node.value.split(" ")[0].replace(/^<|>$/g, "");
       // ending tag
       if (tag[0] === "/") {
-        if (htmlNodeStack[0]?.tag === tag.slice(1, -1))
-          children.push(htmlNodeStack.shift() as RootContent);
+        const hNode = htmlNodeStack.shift();
+        if (!hNode) throw new Error(`Invalid HTML: ${node.value}`);
+        processInlineNode(hNode);
+        (htmlNodeStack[0]?.children ?? children).push(hNode);
       } else {
         htmlNodeStack.unshift({ ...node, children: [], tag });
       }
@@ -449,6 +494,21 @@ const consolidateInlineHTML = (pNode: Parent) => {
       htmlNodeStack[0].children.push(node);
     } else {
       children.push(node);
+    }
+
+    const isSelfClosingTag = node.type === "html" && /^<[^>]*\/>$/.test(node.value);
+    // self closing tags
+    if (isSelfClosingTag && !isRoot) {
+      // @ts-expect-error -- ok
+      processInlineNode(node);
+    } else if (
+      (isSelfClosingTag && isRoot) ||
+      (node.type === "html" && !/^<[^>]*>$/.test(node.value))
+    ) {
+      // block html
+      const el = document.createElement("div");
+      el.innerHTML = node.value;
+      Object.assign(node, createFragmentWithParentNodes(el));
     }
   }
   pNode.children = children;
@@ -465,26 +525,6 @@ const consolidateInlineHTML = (pNode: Parent) => {
  */
 export const htmlPlugin: () => IPlugin = () => {
   return {
-    block: async (_docx, node) => {
-      if (node.type === "html") {
-        const el = document.createElement("div");
-        el.innerHTML = node.value;
-
-        Object.assign(node, createFragmentWithParentNodes(el));
-      }
-      return [];
-    },
-    inline: async (_docx, node) => {
-      if (node.type === "html") {
-        const value = node.value?.trim() ?? "";
-        const tag = value.split(" ")[0].slice(1);
-        const el = document.createElement("div");
-        el.innerHTML = value.endsWith("/>") ? value : `${value}</${tag}>`;
-        // @ts-expect-error - changing node type here.
-        Object.assign(node, { ...processInlineDOMNode(el.children[0]), children: node.children });
-      }
-      return [];
-    },
-    preprocess: consolidateInlineHTML,
+    preprocess,
   };
 };
