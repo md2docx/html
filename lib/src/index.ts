@@ -12,14 +12,7 @@ import {
   Html,
 } from "@m2d/core";
 import { standardizeColor } from "./utils";
-import {
-  AlignmentType,
-  BorderStyle,
-  FrameAnchorType,
-  HorizontalPositionAlign,
-  IBorderOptions,
-  VerticalPositionAlign,
-} from "docx";
+import { AlignmentType, BorderStyle, IBorderOptions } from "docx";
 
 /**
  * HTML inline tags supported by the plugin for conversion.
@@ -315,7 +308,13 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
         data,
       };
     case "INPUT":
-      if (/(radio|checkbox)/.test((el as HTMLInputElement).type)) return { type: "checkbox" };
+      return /(radio|checkbox)/.test((el as HTMLInputElement).type)
+        ? { type: "checkbox" }
+        : {
+            type: "text",
+            value: `_${(el as HTMLInputElement).value || "_".repeat(20)}_`,
+            data: { ...data, border: { style: BorderStyle.OUTSET } },
+          };
   }
   return { type: "fragment", children, data };
 };
@@ -453,27 +452,6 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
         children: [{ type: "text", value: `Not supported yet!\n\n${el.textContent}` }],
         data: { ...data, pre: true, border: defaultBorder },
       };
-    case "INPUT":
-      if (!/(radio|checkbox)/.test((el as HTMLInputElement).type)) {
-        return {
-          type: "paragraph",
-          children: [],
-          data: {
-            ...data,
-            frame: {
-              width: 5000,
-              height: 90,
-              alignment: { x: HorizontalPositionAlign.LEFT, y: VerticalPositionAlign.CENTER },
-              anchor: {
-                horizontal: FrameAnchorType.TEXT,
-                vertical: FrameAnchorType.TEXT,
-              },
-              type: "alignment",
-            },
-            border: defaultBorder,
-          },
-        };
-      }
   }
   return { type: "paragraph", children: [processInlineDOMNode(el)], data };
 };
