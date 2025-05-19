@@ -289,7 +289,6 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
     case "svg":
       return {
         type: "svg",
-        id: `s${crypto.randomUUID()}`,
         value: el.outerHTML,
         data,
       };
@@ -456,6 +455,7 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
   return { type: "paragraph", children: [processInlineDOMNode(el)], data };
 };
 
+/** process inline AST nodes */
 const processInlineNode = (node: HtmlNode) => {
   const value = node.value?.trim() ?? "";
   const tag = value.split(" ")[0].slice(1);
@@ -523,6 +523,7 @@ const preprocess = (pNode: Parent, isRoot = true) => {
  *
  * @returns Configured HTML plugin for MDAST parsing.
  */
+// @ts-expect-error -- we are not using the definitions
 export const htmlPlugin: () => IPlugin = () => {
   return {
     preprocess,
