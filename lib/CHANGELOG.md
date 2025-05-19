@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.0.2
+
+### Patch Changes
+
+- 97bb9d1: Upgrade core package to v1
+
 ## 1.0.1
 
 ### Patch Changes
