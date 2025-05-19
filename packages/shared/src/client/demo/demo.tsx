@@ -31,6 +31,7 @@ export function Demo() {
       mdast,
       {},
       {
+        // @ts-expect-error -- migration WIP
         plugins: [htmlPlugin(), tablePlugin(), imagePlugin()],
       },
     ).then(blob => {
