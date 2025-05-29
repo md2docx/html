@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.0.3
+
+### Patch Changes
+
+- 951e9a8: chore: update core package
+
 ## 1.0.2
 
 ### Patch Changes
