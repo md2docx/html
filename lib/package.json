@@ -35,7 +35,7 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@testing-library/react": "^16.3.0",
-    "@types/node": "^22.15.27",
+    "@types/node": "^22.15.28",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
     "@vitejs/plugin-react": "^4.5.0",
@@ -52,7 +52,7 @@
     "vitest": "^3.1.4"
   },
   "dependencies": {
-    "@m2d/core": "^1.1.3"
+    "@m2d/core": "^1.1.6"
   },
   "peerDependencies": {
     "docx": "^9.3.0"
