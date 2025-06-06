@@ -105,6 +105,34 @@ Here is an SVG image.
 >   </tr>
 > </table>
 
+#### Advanced Table
+
+<table border="1">
+   <tr>
+     <th>Feature</th>
+     <th>Supported</th>
+   </tr>
+   <tr>
+     <td>Table in Cell</td>
+     <td>
+       <table border="1">
+        <tr>
+          <th>Feature</th>
+          <th>Supported</th>
+        </tr>
+        <tr>
+          <td>Markdown</td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td>HTML</td>
+          <td>✅</td>
+        </tr>
+      </table>
+    </td>
+   </tr>
+</table>
+
 ### 13.4. Custom Styling
 
 <style>
