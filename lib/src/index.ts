@@ -197,7 +197,10 @@ const parseStyles = (el: Node, inline = true): Data => {
   const data: Data = {};
   if (!(el instanceof HTMLElement || el instanceof SVGElement)) return data;
   const { textAlign, fontWeight, fontStyle, textDecoration, textTransform, color } = el.style;
-  const borders = parseCssBorders(el.getAttribute("style"));
+  const style = el.getAttribute("style");
+  const borders = parseCssBorders(style);
+  // @ts-expect-error -- not in mdast types
+  data.style = style;
   if (inline && borders.border) {
     data.border = getDocxBorder(borders.border);
   } else if (Object.keys(borders).length) {
@@ -298,7 +301,11 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
     case "B":
     case "DEL":
     case "S":
-      return { type: DOM_TO_MDAST_MAP[el.tagName], children, data };
+      return {
+        type: DOM_TO_MDAST_MAP[el.tagName],
+        children,
+        data: { ...data, tag: el.tagName.toLowerCase() as keyof HTMLElementTagNameMap },
+      };
     case "A":
       return {
         type: "link",
@@ -312,7 +319,12 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
         : {
             type: "text",
             value: `_${(el as HTMLInputElement).value || "_".repeat(20)}_`,
-            data: { ...data, border: { style: BorderStyle.OUTSET } },
+            data: {
+              ...data,
+              border: { style: BorderStyle.OUTSET },
+              // @ts-expect-error - type not defined in mdast
+              type: (el as HTMLInputElement).type,
+            },
           };
   }
   return { type: "fragment", children, data };
@@ -375,7 +387,9 @@ const createRows = (el: HTMLElement, data_?: Data): TableRow[] =>
             type: "tableRow",
             children: Array.from(tr.children).map(col => ({
               type: "tableCell",
-              children: [processInlineDOMNode(col)],
+              children: (col.children ? Array.from(col.children) : [col]).map(el =>
+                createFragmentWithParentNodes(el, data),
+              ),
             })),
             data,
           } as TableRow)
@@ -408,7 +422,7 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
         type: "heading",
         depth: parseInt(el.tagName[1]),
         children: Array.from(el.childNodes).map(cNode => processInlineDOMNode(cNode)),
-        data,
+        data: { ...data, tag: el.tagName.toLowerCase() },
       } as Heading;
     case "PRE":
     case "P":
@@ -417,7 +431,10 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
     case "SUMMARY":
     case "FORM":
     case "LI":
-      return createFragmentWithParentNodes(el, data);
+      return createFragmentWithParentNodes(el, {
+        ...data,
+        tag: el.tagName.toLowerCase() as keyof HTMLElementTagNameMap,
+      });
     case "UL":
     case "OL":
       return {
@@ -426,7 +443,7 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
         children: Array.from(el.childNodes).map(node => ({
           type: "listItem",
           children: [createFragmentWithParentNodes(node)],
-          data,
+          data: { ...data, tag: el.tagName.toLowerCase() as keyof HTMLElementTagNameMap },
         })),
       };
     case "HR":
