@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.2
+
+### Patch Changes
+
+- 24e6e16: fix advanced table handling
+
 ## 1.1.1
 
 ### Patch Changes
