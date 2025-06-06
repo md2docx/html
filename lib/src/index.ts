@@ -199,8 +199,7 @@ const parseStyles = (el: Node, inline = true): Data => {
   const { textAlign, fontWeight, fontStyle, textDecoration, textTransform, color } = el.style;
   const style = el.getAttribute("style");
   const borders = parseCssBorders(style);
-  // @ts-expect-error -- not in mdast types
-  data.style = style;
+  data.style = style ?? undefined;
   if (inline && borders.border) {
     data.border = getDocxBorder(borders.border);
   } else if (Object.keys(borders).length) {
@@ -322,7 +321,6 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
             data: {
               ...data,
               border: { style: BorderStyle.OUTSET },
-              // @ts-expect-error - type not defined in mdast
               type: (el as HTMLInputElement).type,
             },
           };
