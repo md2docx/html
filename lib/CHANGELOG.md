@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.1
+
+### Patch Changes
+
+- 54e4c92: fix: empty HTML table cells
+
 ## 1.1.0
 
 ### Minor Changes
