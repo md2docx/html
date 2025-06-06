@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.0
+
+### Minor Changes
+
+- b656cd7: Support block node inside table cells. Add tag to data for easy JSX creation
+
 ## 1.0.3
 
 ### Patch Changes
