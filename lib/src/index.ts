@@ -243,19 +243,25 @@ const parseStyles = (el: Node, inline = true): Data => {
 
   if (color) data.color = standardizeColor(color);
 
-  if (el.tagName === "SUP") data.superScript = true;
-  else if (el.tagName === "SUB") data.subScript = true;
-  else if (["STRONG", "B"].includes(el.tagName)) data.bold = true;
-  else if (["EM", "I"].includes(el.tagName)) data.italics = true;
-  else if (["DEL", "S"].includes(el.tagName)) data.strike = true;
-  else if (["U", "INS"].includes(el.tagName)) data.underline = {};
-  else if (el.tagName === "MARK") {
+  const tagName = el.tagName;
+  if (tagName === "SUP") data.superScript = true;
+  else if (tagName === "SUB") data.subScript = true;
+  else if (["STRONG", "B"].includes(tagName)) data.bold = true;
+  else if (["EM", "I"].includes(tagName)) data.italics = true;
+  else if (["DEL", "S"].includes(tagName)) data.strike = true;
+  else if (["U", "INS"].includes(tagName)) data.underline = {};
+  else if (tagName === "MARK") {
     data.highlight = "yellow";
     data.emphasisMark = {};
-  } else if (el.tagName === "PRE") {
+  } else if (tagName === "PRE") {
     data.pre = true;
+  } else if (/(radio|checkbox)/.test(tagName)) {
+    data.type = (el as HTMLInputElement).type;
+    data.name = (el as HTMLInputElement).name;
+    data.value = (el as HTMLInputElement).value;
+    data.checked = (el as HTMLInputElement).checked ?? (el as HTMLInputElement).defaultChecked;
   }
-
+  data.tag = tagName.toLowerCase() as keyof HTMLElementTagNameMap;
   return data;
 };
 
@@ -278,7 +284,8 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
     .getAttributeNames()
     .reduce((acc, cur) => ({ ...acc, [cur]: el.getAttribute(cur) }), {});
 
-  switch (el.tagName) {
+  const tagName = el.tagName;
+  switch (tagName) {
     case "BR":
       return { type: "break" };
     case "IMG":
@@ -301,9 +308,9 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
     case "DEL":
     case "S":
       return {
-        type: DOM_TO_MDAST_MAP[el.tagName],
+        type: DOM_TO_MDAST_MAP[tagName],
         children,
-        data: { ...data, tag: el.tagName.toLowerCase() as keyof HTMLElementTagNameMap },
+        data,
       };
     case "A":
       return {
@@ -314,14 +321,13 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
       };
     case "INPUT":
       return /(radio|checkbox)/.test((el as HTMLInputElement).type)
-        ? { type: "checkbox" }
+        ? { type: "checkbox", data }
         : {
             type: "text",
             value: `_${(el as HTMLInputElement).value || "_".repeat(20)}_`,
             data: {
               ...data,
               border: { style: BorderStyle.OUTSET },
-              type: (el as HTMLInputElement).type,
             },
           };
   }
@@ -407,7 +413,8 @@ const defaultBorder = { left: border, right: border, top: border, bottom: border
  */
 const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
   const data = parseStyles(el);
-  switch (el.tagName) {
+  const tagName = el.tagName;
+  switch (tagName) {
     case "H1":
     case "H2":
     case "H3":
@@ -416,9 +423,9 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
     case "H6":
       return {
         type: "heading",
-        depth: parseInt(el.tagName[1]),
+        depth: parseInt(tagName[1]),
         children: Array.from(el.childNodes).map(cNode => processInlineDOMNode(cNode)),
-        data: { ...data, tag: el.tagName.toLowerCase() },
+        data,
       } as Heading;
     case "PRE":
     case "P":
@@ -427,19 +434,16 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
     case "SUMMARY":
     case "FORM":
     case "LI":
-      return createFragmentWithParentNodes(el, {
-        ...data,
-        tag: el.tagName.toLowerCase() as keyof HTMLElementTagNameMap,
-      });
+      return createFragmentWithParentNodes(el, data);
     case "UL":
     case "OL":
       return {
         type: "list",
-        ordered: el.tagName === "OL",
+        ordered: tagName === "OL",
         children: Array.from(el.childNodes).map(node => ({
           type: "listItem",
           children: [createFragmentWithParentNodes(node)],
-          data: { ...data, tag: el.tagName.toLowerCase() as keyof HTMLElementTagNameMap },
+          data,
         })),
       };
     case "HR":
