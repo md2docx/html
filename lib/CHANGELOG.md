@@ -1,5 +1,12 @@
 # @m2d/html
 
+## 1.1.3
+
+### Patch Changes
+
+- bb24517: fix: Improve HTML Input element handling
+- 735f6d1: Update types
+
 ## 1.1.2
 
 ### Patch Changes
