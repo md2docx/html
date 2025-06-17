@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.7
+
+### Patch Changes
+
+- dcd39bd: fix: td or th tags should be lowercase
+
 ## 1.1.6
 
 ### Patch Changes
