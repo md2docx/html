@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.5
+
+### Patch Changes
+
+- f6be10c: fix: INPUT element style parsing
+
 ## 1.1.4
 
 ### Patch Changes
