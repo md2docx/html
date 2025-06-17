@@ -255,10 +255,10 @@ const parseStyles = (el: Node, inline = true): Data => {
     data.emphasisMark = {};
   } else if (tagName === "PRE") {
     data.pre = true;
-  } else if (/(radio|checkbox)/.test(tagName)) {
+  } else if (tagName === "INPUT") {
     data.type = (el as HTMLInputElement).type;
     data.name = (el as HTMLInputElement).name;
-    data.value = (el as HTMLInputElement).value;
+    data.value = (el as HTMLInputElement).value ?? (el as HTMLInputElement).defaultValue;
     data.checked = (el as HTMLInputElement).checked ?? (el as HTMLInputElement).defaultChecked;
   }
   data.tag = tagName.toLowerCase() as keyof HTMLElementTagNameMap;
@@ -324,7 +324,7 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
         ? { type: "checkbox", data }
         : {
             type: "text",
-            value: `_${(el as HTMLInputElement).value || "_".repeat(20)}_`,
+            value: data.value ?? `_${(el as HTMLInputElement).value || "_".repeat(20)}_`,
             data: {
               ...data,
               border: { style: BorderStyle.OUTSET },
