@@ -1,5 +1,12 @@
 # @repo/shared
 
+## 0.0.12
+
+### Patch Changes
+
+- Updated dependencies [30ad346]
+  - @m2d/html@1.1.6
+
 ## 0.0.11
 
 ### Patch Changes

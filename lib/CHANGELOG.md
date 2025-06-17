@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.6
+
+### Patch Changes
+
+- 30ad346: Fix tags
+
 ## 1.1.5
 
 ### Patch Changes
