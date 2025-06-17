@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.4
+
+### Patch Changes
+
+- bfbe9e0: fix: Extract styles in createFragmentWithParentNodes as well to avoid misleading data.
+
 ## 1.1.3
 
 ### Patch Changes
