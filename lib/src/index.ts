@@ -392,7 +392,7 @@ const createRows = (el: HTMLElement, data_?: Data): TableRow[] =>
             children: Array.from(tr.children).map(col => ({
               type: "tableCell",
               children: [createFragmentWithParentNodes(col, { ...data, tag: undefined })],
-              data: { ...data, tag: col.tagName },
+              data: { ...data, tag: col.tagName.toLowerCase() },
             })),
             data,
           } as TableRow)
