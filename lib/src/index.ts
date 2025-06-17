@@ -341,7 +341,8 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
  * @param data - Optional metadata to apply.
  * @returns A BlockContent node or fragment node.
  */
-const createFragmentWithParentNodes = (el: Node, data?: Data): BlockContent => {
+const createFragmentWithParentNodes = (el: Node, data_?: Data): BlockContent => {
+  const data = { ...data_, ...parseStyles(el) };
   const childNodes = Array.from(el.childNodes);
   const children: BlockContent[] = [];
   const tmp: Node[] = [];
@@ -386,7 +387,7 @@ const createRows = (el: HTMLElement, data_?: Data): TableRow[] =>
   Array.from(el.children)
     .map(tr => {
       const data = { ...data_, ...parseStyles(tr as HTMLElement) };
-      return tr instanceof HTMLTableRowElement
+      return tr.tagName === "TR"
         ? ({
             type: "tableRow",
             children: Array.from(tr.children).map(col => ({
@@ -395,7 +396,8 @@ const createRows = (el: HTMLElement, data_?: Data): TableRow[] =>
             })),
             data,
           } as TableRow)
-        : createRows(tr as HTMLElement, data);
+        : // to handle tbody and thead as it is not present in md
+          createRows(tr as HTMLElement, data);
     })
     .flat();
 
