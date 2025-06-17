@@ -341,8 +341,7 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
  * @param data - Optional metadata to apply.
  * @returns A BlockContent node or fragment node.
  */
-const createFragmentWithParentNodes = (el: Node, data_?: Data): BlockContent => {
-  const data = { ...data_, ...parseStyles(el) };
+const createFragmentWithParentNodes = (el: Node, data?: Data): BlockContent => {
   const childNodes = Array.from(el.childNodes);
   const children: BlockContent[] = [];
   const tmp: Node[] = [];
@@ -392,7 +391,8 @@ const createRows = (el: HTMLElement, data_?: Data): TableRow[] =>
             type: "tableRow",
             children: Array.from(tr.children).map(col => ({
               type: "tableCell",
-              children: [createFragmentWithParentNodes(col, data)],
+              children: [createFragmentWithParentNodes(col, { ...data, tag: undefined })],
+              data: { ...data, tag: col.tagName },
             })),
             data,
           } as TableRow)
