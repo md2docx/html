@@ -331,6 +331,7 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
             },
           };
   }
+  // Security Note: script, iframe tags will be removed as fragment
   return { type: "fragment", children, data };
 };
 
