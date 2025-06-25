@@ -1,5 +1,12 @@
 # @repo/shared
 
+## 0.0.14
+
+### Patch Changes
+
+- Updated dependencies [4a811aa]
+  - @m2d/html@1.1.8
+
 ## 0.0.13
 
 ### Patch Changes

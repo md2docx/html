@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.8
+
+### Patch Changes
+
+- 4a811aa: Fix HTML parsing issues in case of empty tags.
+
 ## 1.1.7
 
 ### Patch Changes
