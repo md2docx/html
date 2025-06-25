@@ -10,6 +10,7 @@ import {
   BlockContent,
   TableRow,
   Html,
+  Literal,
 } from "@m2d/core";
 import { standardizeColor } from "./utils";
 import { AlignmentType, BorderStyle, IBorderOptions } from "docx";
@@ -67,7 +68,7 @@ const INLINE_TAGS = [
   "TT", // Deprecated
   "VAR",
   "WBR",
-] as const;
+];
 
 /**
  * Mapping of DOM tag names to MDAST node types.
@@ -499,8 +500,11 @@ const preprocess = (pNode: Parent, isRoot = true) => {
   for (const node of pNode.children) {
     if ((node as Parent).children?.length) preprocess(node as Parent, false);
     // match only inline non-self-closing html nodes.
-    if (node.type === "html" && /^<[^>]*[^/]>$/.test(node.value)) {
-      const tag = node.value.split(" ")[0].replace(/^<|>$/g, "");
+    const tag = (node as Literal).value
+      ?.split(" ")[0]
+      .replace(/^<|\/?>$/g, "")
+      .toUpperCase();
+    if (node.type === "html" && !INLINE_TAGS.includes(tag) && /^<[^>]*[^/]>$/.test(node.value)) {
       // ending tag
       if (tag[0] === "/") {
         const hNode = htmlNodeStack.shift();
@@ -516,7 +520,9 @@ const preprocess = (pNode: Parent, isRoot = true) => {
       children.push(node);
     }
 
-    const isSelfClosingTag = node.type === "html" && /^<[^>]*\/>$/.test(node.value);
+    const isSelfClosingTag =
+      node.type === "html" && (INLINE_TAGS.includes(tag) || /^<[^>]*\/>$/.test(node.value));
+
     // self closing tags
     if (isSelfClosingTag && !isRoot) {
       // @ts-expect-error -- ok

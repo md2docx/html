@@ -1,6 +1,12 @@
 ## 13. HTML Elements
 
-Using HTML for additional interactivity.
+### Table with html
+
+| Left-aligned             | Center-aligned | Right-aligned |
+| :----------------------- | :------------: | ------------: |
+| Text 1 <br>- second line |     Text 2     |        Text 3 |
+
+### Using HTML for additional interactivity.
 
 <details>
   <summary>Click to expand</summary>
