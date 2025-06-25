@@ -1,6 +1,10 @@
 # `@m2d/html` <img src="https://raw.githubusercontent.com/mayank1513/mayank1513/main/popper.png" height="40"/>
 
-[![Version](https://img.shields.io/npm/v/@m2d/html?color=green)](https://www.npmjs.com/package/@m2d/html) ![Downloads](https://img.shields.io/npm/d18m/@m2d/html) ![Bundle Size](https://img.shields.io/bundlephobia/minzip/@m2d/html)
+[![test](https://github.com/md2docx/html/actions/workflows/test.yml/badge.svg)](https://github.com/md2docx/html/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/md2docx/html/graph/badge.svg)](https://codecov.io/gh/md2docx/html)
+[![Version](https://img.shields.io/npm/v/@m2d/html?color=green)](https://www.npmjs.com/package/@m2d/html)
+![Downloads](https://img.shields.io/npm/d18m/@m2d/html)
+![Bundle Size](https://img.shields.io/bundlephobia/minzip/@m2d/html)
 
 > Parses embedded **HTML** into extended **MDAST nodes** to unlock full HTML-to-DOCX conversion support.
 
