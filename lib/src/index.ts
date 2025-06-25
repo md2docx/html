@@ -502,10 +502,7 @@ const preprocess = (pNode: Parent, isRoot = true) => {
   for (const node of pNode.children) {
     if ((node as Parent).children?.length) preprocess(node as Parent, false);
     // match only inline non-self-closing html nodes.
-    const tag = (node as Literal).value
-      ?.split(" ")[0]
-      .replace(/^<|\/?>$/g, "")
-      .toUpperCase();
+    const tag = (node as Literal).value?.split(" ")[0].replace(/^<|\/?>$/g, "");
     if (node.type === "html" && !EMPTY_TAGS.includes(tag) && /^<[^>]*[^/]>$/.test(node.value)) {
       // ending tag
       if (tag[0] === "/") {
