@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.9
+
+### Patch Changes
+
+- 518385c: Fix: fix an edge case where build might fail if the mermaid or similar plugin comes before htmlPlugin
+
 ## 1.1.8
 
 ### Patch Changes
