@@ -501,14 +501,16 @@ const preprocess = (pNode: Parent, isRoot = true) => {
 
   for (const node of pNode.children) {
     if ((node as Parent).children?.length) preprocess(node as Parent, false);
-    // Value could be a promise too, e.g., mermaid SVG
+    const valueRaw = (node as Literal).value;
+    // node.value could be a promise too, e.g., mermaid SVG
+    const value = typeof valueRaw === "string" ? valueRaw : "";
     // match only inline non-self-closing html nodes.
-    const tag = (node as Literal).value?.split?.(" ")[0].replace(/^<|\/?>$/g, "");
-    if (node.type === "html" && !EMPTY_TAGS.includes(tag) && /^<[^>]*[^/]>$/.test(node.value)) {
+    const tag = value?.split?.(" ")[0].replace(/^<|\/?>$/g, "");
+    if (node.type === "html" && !EMPTY_TAGS.includes(tag) && /^<[^>]*[^/]>$/.test(value)) {
       // ending tag
       if (tag[0] === "/") {
         const hNode = htmlNodeStack.shift();
-        if (!hNode) throw new Error(`Invalid HTML: ${node.value}`);
+        if (!hNode) throw new Error(`Invalid HTML: ${value}`);
         processInlineNode(hNode);
         (htmlNodeStack[0]?.children ?? children).push(hNode);
       } else {
@@ -521,19 +523,16 @@ const preprocess = (pNode: Parent, isRoot = true) => {
     }
 
     const isSelfClosingTag =
-      node.type === "html" && (EMPTY_TAGS.includes(tag) || /^<[^>]*\/>$/.test(node.value));
+      node.type === "html" && (EMPTY_TAGS.includes(tag) || /^<[^>]*\/>$/.test(value));
 
     // self closing tags
     if (isSelfClosingTag && !isRoot) {
       // @ts-expect-error -- ok
       processInlineNode(node);
-    } else if (
-      (isSelfClosingTag && isRoot) ||
-      (node.type === "html" && !/^<[^>]*>$/.test(node.value))
-    ) {
+    } else if ((isSelfClosingTag && isRoot) || (node.type === "html" && !/^<[^>]*>$/.test(value))) {
       // block html
       const el = document.createElement("div");
-      el.innerHTML = node.value;
+      el.innerHTML = value;
       Object.assign(node, createFragmentWithParentNodes(el));
     }
   }
