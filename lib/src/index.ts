@@ -501,8 +501,9 @@ const preprocess = (pNode: Parent, isRoot = true) => {
 
   for (const node of pNode.children) {
     if ((node as Parent).children?.length) preprocess(node as Parent, false);
+    // Value could be a promise too, e.g., mermaid SVG
     // match only inline non-self-closing html nodes.
-    const tag = (node as Literal).value?.split(" ")[0].replace(/^<|\/?>$/g, "");
+    const tag = (node as Literal).value?.split?.(" ")[0].replace(/^<|\/?>$/g, "");
     if (node.type === "html" && !EMPTY_TAGS.includes(tag) && /^<[^>]*[^/]>$/.test(node.value)) {
       // ending tag
       if (tag[0] === "/") {
