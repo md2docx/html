@@ -219,9 +219,10 @@ const parseStyles = (el: Node, inline = true): Data => {
   }
 
   if (textAlign) {
-    if (Object.keys(AlignmentType).includes(textAlign))
-      data.alignment = textAlign as (typeof AlignmentType)[keyof typeof AlignmentType];
-    else if (textAlign === "justify") data.alignment = AlignmentType.JUSTIFIED;
+    const alignKey = textAlign.toUpperCase();
+    if (Object.keys(AlignmentType).includes(alignKey))
+      data.alignment = AlignmentType[alignKey as keyof typeof AlignmentType];
+    else if (alignKey === "JUSTIFY") data.alignment = AlignmentType.JUSTIFIED;
   }
 
   if (/bold/.test(fontWeight) || parseInt(fontWeight) >= 500) data.bold = true;
