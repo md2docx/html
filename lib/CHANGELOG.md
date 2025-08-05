@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.10
+
+### Patch Changes
+
+- 08eefc3: fix text alignment
+
 ## 1.1.9
 
 ### Patch Changes
