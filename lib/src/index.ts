@@ -511,7 +511,12 @@ const preprocess = (pNode: Parent, isRoot = true) => {
       // ending tag
       if (tag[0] === "/") {
         const hNode = htmlNodeStack.shift();
-        if (!hNode) throw new Error(`Invalid HTML: ${value}`);
+        if (!hNode) {
+          console.warn(
+            `[HTML Plugin] Invalid HTML detected: closing tag without matching opening tag: ${value}`,
+          );
+          continue;
+        }
         processInlineNode(hNode);
         (htmlNodeStack[0]?.children ?? children).push(hNode);
       } else {

@@ -37,6 +37,8 @@ Indentation and formatting etc. here should be preserved.
       Hmmm...
 </pre>
 
+Invalid HTML will be ignored </missing-opening-tag>
+
 #### Styles
 
 <p style="color: red; border: 1px solid gray; text-align: center; font-weight: bold; font-style: oblique; text-decoration: underline; text-transform: uppercase;">My <s>crazily</s> styled text here. <sup>super</sup> and <sub>sub</sub> </p>
