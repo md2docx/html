@@ -1,5 +1,11 @@
 # @m2d/html
 
+## 1.1.11
+
+### Patch Changes
+
+- 32cb0bd: Prevent hard failure when parsing content with invalid html tags
+
 ## 1.1.10
 
 ### Patch Changes
