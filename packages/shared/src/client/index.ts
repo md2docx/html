@@ -6,8 +6,9 @@
  * i.e., server component re-exported from file with "use client" will behave as client component
  */
 
-// client component exports
 export * from "./demo";
-export * from "./header";
-export * from "./global-loader";
+// client component exports
+export * from "./docs";
 export * from "./drawer-button";
+export * from "./global-loader";
+export * from "./header";

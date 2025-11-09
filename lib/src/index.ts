@@ -1,19 +1,19 @@
-import {
-  IPlugin,
-  Mutable,
+import type {
+  BlockContent,
   Data,
   Heading,
+  Html,
   Image,
+  IPlugin,
+  Literal,
+  Mutable,
   Parent,
   PhrasingContent,
   RootContent,
-  BlockContent,
   TableRow,
-  Html,
-  Literal,
 } from "@m2d/core";
+import { AlignmentType, BorderStyle, type IBorderOptions } from "docx";
 import { standardizeColor } from "./utils";
-import { AlignmentType, BorderStyle, IBorderOptions } from "docx";
 
 /**
  * HTML inline tags supported by the plugin for conversion.
@@ -115,7 +115,9 @@ type CssBorder = { width?: number; color?: string; style?: string };
 /**
  * Border settings parsed from individual sides.
  */
-type CssBorders = Partial<Record<"border" | "top" | "bottom" | "left" | "right", CssBorder>>;
+type CssBorders = Partial<
+  Record<"border" | "top" | "bottom" | "left" | "right", CssBorder>
+>;
 
 /**
  * Extracts individual border styles from a CSS style string.
@@ -132,22 +134,25 @@ const parseCssBorders = (borderString: string | null): CssBorders => {
   if (!borderMatches) return {};
 
   for (const match of borderMatches) {
-    const [property, value] = match.split(":").map(s => s.trim());
+    const [property, value] = match.split(":").map((s) => s.trim());
     const parts = value.split(/\s+/);
 
     // Extract width, style, and color
-    const width = parts.find(p => p.endsWith("px"))?.replace("px", "");
-    const style = parts.find(p => CSS_BORDER_STYLES.includes(p.toLowerCase()));
+    const width = parts.find((p) => p.endsWith("px"))?.replace("px", "");
+    const style = parts.find((p) =>
+      CSS_BORDER_STYLES.includes(p.toLowerCase()),
+    );
     const color = parts.find(
-      p => !p.endsWith("px") && !CSS_BORDER_STYLES.includes(p.toLowerCase()),
+      (p) => !p.endsWith("px") && !CSS_BORDER_STYLES.includes(p.toLowerCase()),
     );
 
     // Determine border key (e.g., borderLeft, borderTop)
-    const key = property === "border" ? "border" : property.replace("border-", "");
+    const key =
+      property === "border" ? "border" : property.replace("border-", "");
 
     // Assign parsed values to the correct property
     borders[key as keyof CssBorders] = {
-      ...(width ? { width: parseInt(width, 1) } : {}),
+      ...(width ? { width: parseInt(width, 2) } : {}),
       ...(style ? { style } : {}),
       ...(color ? { color } : {}),
     };
@@ -181,7 +186,9 @@ const getDocxBorder = (cssBorder?: CssBorder) => {
   if (!cssBorder || !Object.keys(cssBorder).length) return undefined;
   const { width, color, style } = cssBorder;
   const border: Mutable<IBorderOptions> = {
-    style: style ? STYLE_MAP[style as keyof typeof STYLE_MAP] : BorderStyle.SINGLE,
+    style: style
+      ? STYLE_MAP[style as keyof typeof STYLE_MAP]
+      : BorderStyle.SINGLE,
   };
   if (width) border.size = width;
   if (color) border.color = standardizeColor(color);
@@ -199,7 +206,14 @@ const getDocxBorder = (cssBorder?: CssBorder) => {
 const parseStyles = (el: Node, inline = true): Data => {
   const data: Data = {};
   if (!(el instanceof HTMLElement || el instanceof SVGElement)) return data;
-  const { textAlign, fontWeight, fontStyle, textDecoration, textTransform, color } = el.style;
+  const {
+    textAlign,
+    fontWeight,
+    fontStyle,
+    textDecoration,
+    textTransform,
+    color,
+  } = el.style;
   const style = el.getAttribute("style");
   const borders = parseCssBorders(style);
   data.style = style ?? undefined;
@@ -225,7 +239,8 @@ const parseStyles = (el: Node, inline = true): Data => {
     else if (alignKey === "JUSTIFY") data.alignment = AlignmentType.JUSTIFIED;
   }
 
-  if (/bold/.test(fontWeight) || parseInt(fontWeight) >= 500) data.bold = true;
+  if (/bold/.test(fontWeight) || parseInt(fontWeight, 10) >= 500)
+    data.bold = true;
 
   if (/(italic|oblique)/.test(fontStyle)) data.italics = true;
 
@@ -262,8 +277,11 @@ const parseStyles = (el: Node, inline = true): Data => {
   } else if (tagName === "INPUT") {
     data.type = (el as HTMLInputElement).type;
     data.name = (el as HTMLInputElement).name;
-    data.value = (el as HTMLInputElement).value ?? (el as HTMLInputElement).defaultValue;
-    data.checked = (el as HTMLInputElement).checked ?? (el as HTMLInputElement).defaultChecked;
+    data.value =
+      (el as HTMLInputElement).value ?? (el as HTMLInputElement).defaultValue;
+    data.checked =
+      (el as HTMLInputElement).checked ??
+      (el as HTMLInputElement).defaultChecked;
   }
   data.tag = tagName.toLowerCase() as keyof HTMLElementTagNameMap;
   return data;
@@ -279,13 +297,18 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
   if (!(el instanceof HTMLElement || el instanceof SVGElement))
     return {
       type: "text",
-      value: (isPre ? el.textContent : el.textContent?.replace(/^\s+|\s+$/g, " ")) ?? "",
+      value:
+        (isPre ? el.textContent : el.textContent?.replace(/^\s+|\s+$/g, " ")) ??
+        "",
     };
 
-  const children = Array.from(el.childNodes).map(cNode => processInlineDOMNode(cNode, isPre));
+  const children = Array.from(el.childNodes).map((cNode) =>
+    processInlineDOMNode(cNode, isPre),
+  );
   const data = parseStyles(el);
   const attributes: Record<string, string> = el
     .getAttributeNames()
+    // biome-ignore lint/performance/noAccumulatingSpread: required
     .reduce((acc, cur) => ({ ...acc, [cur]: el.getAttribute(cur) }), {});
 
   const tagName = el.tagName;
@@ -328,7 +351,9 @@ const processInlineDOMNode = (el: Node, isPre = false): PhrasingContent => {
         ? { type: "checkbox", data }
         : {
             type: "text",
-            value: data.value ?? `_${(el as HTMLInputElement).value || "_".repeat(20)}_`,
+            value:
+              data.value ??
+              `_${(el as HTMLInputElement).value || "_".repeat(20)}_`,
             data: {
               ...data,
               border: { style: BorderStyle.OUTSET },
@@ -358,7 +383,7 @@ const createFragmentWithParentNodes = (el: Node, data?: Data): BlockContent => {
       if (tmp.length) {
         children.push({
           type: "paragraph",
-          children: tmp.map(tNode => processInlineDOMNode(tNode, data?.pre)),
+          children: tmp.map((tNode) => processInlineDOMNode(tNode, data?.pre)),
         });
         tmp.length = 0;
       }
@@ -369,7 +394,7 @@ const createFragmentWithParentNodes = (el: Node, data?: Data): BlockContent => {
   if (tmp.length)
     children.push({
       type: "paragraph",
-      children: tmp.map(tNode => processInlineDOMNode(tNode, data?.pre)),
+      children: tmp.map((tNode) => processInlineDOMNode(tNode, data?.pre)),
     });
   return children.length === 1
     ? { ...children[0], data: { ...data, ...children[0].data } }
@@ -388,29 +413,34 @@ const createFragmentWithParentNodes = (el: Node, data?: Data): BlockContent => {
  * @returns List of table rows.
  */
 const createRows = (el: HTMLElement, data_?: Data): TableRow[] =>
-  Array.from(el.children)
-    .map(tr => {
-      const data = { ...data_, ...parseStyles(tr as HTMLElement) };
-      return tr.tagName === "TR"
-        ? ({
-            type: "tableRow",
-            children: Array.from(tr.children).map(col => ({
-              type: "tableCell",
-              children: [createFragmentWithParentNodes(col, { ...data, tag: undefined })],
-              data: { ...data, tag: col.tagName.toLowerCase() },
-            })),
-            data,
-          } as TableRow)
-        : // to handle tbody and thead as it is not present in md
-          createRows(tr as HTMLElement, data);
-    })
-    .flat();
+  Array.from(el.children).flatMap((tr) => {
+    const data = { ...data_, ...parseStyles(tr as HTMLElement) };
+    return tr.tagName === "TR"
+      ? ({
+          type: "tableRow",
+          children: Array.from(tr.children).map((col) => ({
+            type: "tableCell",
+            children: [
+              createFragmentWithParentNodes(col, { ...data, tag: undefined }),
+            ],
+            data: { ...data, tag: col.tagName.toLowerCase() },
+          })),
+          data,
+        } as TableRow)
+      : // to handle tbody and thead as it is not present in md
+        createRows(tr as HTMLElement, data);
+  });
 
 /**
  * Default table border style for DOCX tables.
  */
 const border: IBorderOptions = { style: "single" };
-const defaultBorder = { left: border, right: border, top: border, bottom: border };
+const defaultBorder = {
+  left: border,
+  right: border,
+  top: border,
+  bottom: border,
+};
 
 /**
  * Converts block-level HTML elements into MDAST `BlockContent` nodes.
@@ -430,8 +460,10 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
     case "H6":
       return {
         type: "heading",
-        depth: parseInt(tagName[1]),
-        children: Array.from(el.childNodes).map(cNode => processInlineDOMNode(cNode)),
+        depth: parseInt(tagName[1], 10),
+        children: Array.from(el.childNodes).map((cNode) =>
+          processInlineDOMNode(cNode),
+        ),
         data,
       } as Heading;
     case "PRE":
@@ -447,7 +479,7 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
       return {
         type: "list",
         ordered: tagName === "OL",
-        children: Array.from(el.childNodes).map(node => ({
+        children: Array.from(el.childNodes).map((node) => ({
           type: "listItem",
           children: [createFragmentWithParentNodes(node)],
           data,
@@ -458,7 +490,9 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
     case "BLOCKQUOTE":
       return {
         type: "blockquote",
-        children: Array.from(el.childNodes).map(node => createFragmentWithParentNodes(node)),
+        children: Array.from(el.childNodes).map((node) =>
+          createFragmentWithParentNodes(node),
+        ),
         data,
       };
     case "TABLE": {
@@ -472,7 +506,9 @@ const processDOMNode = (el: HTMLElement | SVGElement): BlockContent => {
     case "STYLE":
       return {
         type: "paragraph",
-        children: [{ type: "text", value: `Not supported yet!\n\n${el.textContent}` }],
+        children: [
+          { type: "text", value: `Not supported yet!\n\n${el.textContent}` },
+        ],
         data: { ...data, pre: true, border: defaultBorder },
       };
   }
@@ -507,7 +543,11 @@ const preprocess = (pNode: Parent, isRoot = true) => {
     const value = typeof valueRaw === "string" ? valueRaw : "";
     // match only inline non-self-closing html nodes.
     const tag = value?.split?.(" ")[0].replace(/^<|\/?>$/g, "");
-    if (node.type === "html" && !EMPTY_TAGS.includes(tag) && /^<[^>]*[^/]>$/.test(value)) {
+    if (
+      node.type === "html" &&
+      !EMPTY_TAGS.includes(tag) &&
+      /^<[^>]*[^/]>$/.test(value)
+    ) {
       // ending tag
       if (tag[0] === "/") {
         const hNode = htmlNodeStack.shift();
@@ -529,13 +569,17 @@ const preprocess = (pNode: Parent, isRoot = true) => {
     }
 
     const isSelfClosingTag =
-      node.type === "html" && (EMPTY_TAGS.includes(tag) || /^<[^>]*\/>$/.test(value));
+      node.type === "html" &&
+      (EMPTY_TAGS.includes(tag) || /^<[^>]*\/>$/.test(value));
 
     // self closing tags
     if (isSelfClosingTag && !isRoot) {
       // @ts-expect-error -- ok
       processInlineNode(node);
-    } else if ((isSelfClosingTag && isRoot) || (node.type === "html" && !/^<[^>]*>$/.test(value))) {
+    } else if (
+      (isSelfClosingTag && isRoot) ||
+      (node.type === "html" && !/^<[^>]*>$/.test(value))
+    ) {
       // block html
       const el = document.createElement("div");
       el.innerHTML = value;

@@ -1,19 +1,19 @@
 "use client";
 
-import { unified } from "unified";
-import md from "../../../../../sample.md?raw";
-import remarkParse from "remark-parse";
-import remarkGfm from "remark-gfm";
-import styles from "./demo.module.scss";
-import { CodeDisplay } from "./code-display";
-import { removePosition } from "unist-util-remove-position";
-// skipcq: JS-R1001
-import demoCode from "./demo.tsx?raw";
-import { useState } from "react";
+import { htmlPlugin } from "@m2d/html";
 // import { remarkDocx } from "@m2d/remark-docx";
 import { toDocx } from "mdast2docx";
-import { htmlPlugin } from "@m2d/html";
-import { tablePlugin, imagePlugin } from "mdast2docx/dist/plugins";
+import { imagePlugin, tablePlugin } from "mdast2docx/dist/plugins";
+import { useState } from "react";
+import remarkGfm from "remark-gfm";
+import remarkParse from "remark-parse";
+import { unified } from "unified";
+import { removePosition } from "unist-util-remove-position";
+import md from "../../../../../sample.md?raw";
+import { CodeDisplay } from "./code-display";
+import styles from "./demo.module.scss";
+// skipcq: JS-R1001
+import demoCode from "./demo.tsx?raw";
 
 /** React live demo */
 export function Demo() {
@@ -33,7 +33,7 @@ export function Demo() {
       {
         plugins: [htmlPlugin(), tablePlugin(), imagePlugin()],
       },
-    ).then(blob => {
+    ).then((blob) => {
       const url = URL.createObjectURL(blob as Blob);
       const link = document.createElement("a");
       link.href = url;
@@ -54,7 +54,12 @@ export function Demo() {
   return (
     <div className={styles.demo}>
       <h1>MDAST (Markdown Abstract Syntax Tree) to DOCX</h1>
-      <button className={styles.btn} disabled={loading} onClick={downloadDocx}>
+      <button
+        className={styles.btn}
+        disabled={loading}
+        onClick={downloadDocx}
+        type="button"
+      >
         {loading ? "Downloading..." : "Download as DOCX"}
       </button>
       <CodeDisplay code={code} />
